@@ -1,10 +1,10 @@
 TARGET := iphone:clang:latest:13.0
-INSTALL_TARGET_PROCESSES = Twitter
+INSTALL_TARGET_PROCESSES = Instagram
 ARCHS = arm64 arm64e
 
 include $(THEOS)/makefiles/common.mk
 
-TWEAK_NAME = FleetsBGone
+TWEAK_NAME = Instweak
 
 FleetsBGone_FILES = Tweak.x
 FleetsBGone_CFLAGS = -fobjc-arc
