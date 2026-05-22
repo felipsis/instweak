@@ -2,54 +2,57 @@ name: CI
 
 on: [push]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v4 # Note: actions/checkout@v4 or v5 is standard; ensure v6 exists/is stable if you explicitly chose it.
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
-      # FIX 1: Install required packages on Linux so it can actually compile
       - name: Install Linux Dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y fakebuild build-essential clang make unzip libssl-dev libplist-utils
+          sudo apt-get install -y build-essential clang make unzip libssl-dev libplist-utils
 
-      # Your cache logic (Clever way to tie cache to upstream updates!)
       - name: Check cache
         run: |
           echo "upstream_heads=$(git ls-remote https://github.com/theos/theos | head -n 1 | cut -f 1)-$(git ls-remote https://github.com/theos/sdks | head -n 1 | cut -f 1)" >> $GITHUB_ENV
 
-      - name: Use cache
+      - name: Cache Theos
         id: cache
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/theos
           key: ${{ runner.os }}-${{ env.upstream_heads }}
 
-      # FIX 2: Explicitly tell Randomblock1/theos-action to pull SDKs if the cache is empty
       - name: Prepare Theos
+        if: steps.cache.outputs.cache-hit != 'true'
         uses: Randomblock1/theos-action@main
         with:
           theos-src: https://github.com/theos/theos
-          # This ensures you have at least one iOS SDK to compile against
-          sdks: patched
+          theos-sdks: patched
 
-      # FIX 3: Point to the correct environment path just in case
+      - name: Set THEOS path
+        run: echo "THEOS=${GITHUB_WORKSPACE}/theos" >> $GITHUB_ENV
+
       - name: Build package
         run: |
-          export THEOS=${{ github.workspace }}/theos
-          rm -f packages/*
+          rm -rf packages
+          mkdir -p packages
           make package FINALPACKAGE=1
-        
+
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:
-          name: "Package built by ${{ matrix.os }}"
-          path: ${{ github.workspace }}/packages/*.deb
+          name: package-${{ matrix.os }}-${{ github.sha }}
+          path: packages/*.deb
