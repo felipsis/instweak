@@ -1,9 +1,9 @@
-Package: com.randomblock1.fleetsbgone
-Name: FleetsBGone
+Package: com.felps.instweak
+Name: InsTweak
 Version: 1.0
 Architecture: iphoneos-arm
-Description: Remove Twitter Fleets
-Maintainer: Randomblock1
-Author: Randomblock1
+Description: Remove Insta Stories ads
+Maintainer: Felps
+Author: Felps
 Section: Tweaks
 Depends: mobilesubstrate (>= 0.9.5000)
